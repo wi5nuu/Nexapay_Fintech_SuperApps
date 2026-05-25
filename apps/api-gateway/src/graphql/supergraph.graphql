@@ -1,0 +1,350 @@
+schema
+  @link(url: "https://specs.apollo.dev/federation/v2.5", import: [
+    "@key",
+    "@shareable",
+    "@provides",
+    "@external",
+    "@extends",
+    "@requires",
+    "@inaccessible",
+    "@tag",
+    "@override",
+    "@composeDirective",
+    "@interfaceObject"
+  ]) {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  _service: _Service!
+  _entities(representations: [_Any!]!): [_Entity]!
+}
+
+type Mutation {
+  _empty: String
+}
+
+scalar _Any
+scalar DateTime
+scalar Decimal
+scalar JSON
+scalar Upload
+
+type _Service {
+  sdl: String!
+}
+
+union _Entity = User | Wallet | Transaction | LoanApplication | InvestmentProduct | Notification
+
+"""Auth Subgraph"""
+type User @key(fields: "id") {
+  id: ID!
+  email: String! @shareable
+  phone: String @shareable
+  firstName: String!
+  lastName: String!
+  role: UserRole!
+  kycStatus: KycStatus @shareable
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  wallet: Wallet
+  loans: [LoanApplication!]
+  investments: [InvestmentProduct!]
+}
+
+enum UserRole {
+  CUSTOMER
+  MERCHANT
+  ADMIN
+  SUPPORT
+  COMPLIANCE
+}
+
+"""User-KYC Subgraph"""
+enum KycStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+type KycDocument @key(fields: "id") {
+  id: ID!
+  userId: String!
+  type: KycDocumentType!
+  status: KycStatus!
+  fileUrl: String
+  verifiedAt: DateTime
+  rejectedReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum KycDocumentType {
+  PASSPORT
+  NATIONAL_ID
+  DRIVERS_LICENSE
+  UTILITY_BILL
+  BANK_STATEMENT
+  SELFIE
+}
+
+"""Wallet Subgraph"""
+type Wallet @key(fields: "id") @extends {
+  id: ID! @external
+  userId: String! @external
+  balance: Decimal!
+  currency: String!
+  ledgerBalance: Decimal!
+  availableBalance: Decimal!
+  isFrozen: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Transaction @key(fields: "id") {
+  id: ID!
+  walletId: String!
+  userId: String!
+  type: TransactionType!
+  status: TransactionStatus!
+  amount: Decimal!
+  currency: String!
+  description: String
+  reference: String!
+  idempotencyKey: String
+  metadata: JSON
+  fee: Decimal
+  balanceBefore: Decimal!
+  balanceAfter: Decimal!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  TRANSFER
+  WITHDRAWAL
+  DEPOSIT
+  REFUND
+  FEE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+  CANCELLED
+}
+
+"""Loan Subgraph"""
+type LoanApplication @key(fields: "id") {
+  id: ID!
+  userId: String!
+  amount: Decimal!
+  currency: String!
+  purpose: String
+  termMonths: Int!
+  interestRate: Decimal!
+  status: LoanStatus!
+  approvedBy: String
+  approvedAt: DateTime
+  disbursedAt: DateTime
+  repaidAmount: Decimal
+  remainingBalance: Decimal
+  dueDate: DateTime
+  collateral: JSON
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum LoanStatus {
+  DRAFT
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  DISBURSED
+  ACTIVE
+  REPAID
+  DEFAULTED
+  WRITTEN_OFF
+}
+
+"""Investment Subgraph"""
+type InvestmentProduct @key(fields: "id") {
+  id: ID!
+  userId: String!
+  type: InvestmentType!
+  name: String!
+  amount: Decimal!
+  currency: String!
+  expectedReturn: Decimal!
+  riskLevel: RiskLevel!
+  status: InvestmentStatus!
+  maturityDate: DateTime
+  purchasedAt: DateTime!
+  withdrawnAt: DateTime
+  returns: [InvestmentReturn!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type InvestmentReturn @key(fields: "id") {
+  id: ID!
+  investmentId: String!
+  amount: Decimal!
+  currency: String!
+  type: ReturnType!
+  paidAt: DateTime!
+  createdAt: DateTime!
+}
+
+enum InvestmentType {
+  FIXED_DEPOSIT
+  MUTUAL_FUND
+  TREASURY_BILL
+  BOND
+  STOCK
+  REAL_ESTATE
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  MATURED
+  WITHDRAWN
+  CANCELLED
+}
+
+enum ReturnType {
+  INTEREST
+  DIVIDEND
+  CAPITAL_GAIN
+}
+
+"""Notification Subgraph"""
+type Notification @key(fields: "id") {
+  id: ID!
+  userId: String!
+  type: NotificationType!
+  channel: NotificationChannel!
+  title: String!
+  body: String!
+  data: JSON
+  isRead: Boolean!
+  readAt: DateTime
+  createdAt: DateTime!
+}
+
+enum NotificationType {
+  TRANSACTION_ALERT
+  KYC_UPDATE
+  LOAN_UPDATE
+  INVESTMENT_UPDATE
+  PROMOTIONAL
+  SYSTEM_ALERT
+  FRAUD_ALERT
+  SECURITY_ALERT
+}
+
+enum NotificationChannel {
+  PUSH
+  SMS
+  EMAIL
+  IN_APP
+  WEBHOOK
+}
+
+"""Reporting Subgraph"""
+type Report @key(fields: "id") {
+  id: ID!
+  userId: String
+  type: ReportType!
+  granularity: ReportGranularity!
+  parameters: JSON
+  data: JSON
+  generatedAt: DateTime!
+  expiresAt: DateTime
+  createdAt: DateTime!
+}
+
+enum ReportType {
+  TRANSACTION_HISTORY
+  BALANCE_SUMMARY
+  LOAN_SUMMARY
+  INVESTMENT_SUMMARY
+  KYC_AUDIT
+  FRAUD_ANALYSIS
+  USER_ACTIVITY
+  REVENUE
+}
+
+enum ReportGranularity {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+"""Fraud Detection Subgraph"""
+type FraudAlert @key(fields: "id") {
+  id: ID!
+  userId: String!
+  ruleId: String!
+  ruleName: String!
+  severity: FraudSeverity!
+  status: FraudAlertStatus!
+  details: JSON
+  ipAddress: String
+  deviceFingerprint: String
+  detectedAt: DateTime!
+  resolvedAt: DateTime
+  resolvedBy: String
+  createdAt: DateTime!
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FraudAlertStatus {
+  OPEN
+  INVESTIGATING
+  CONFIRMED
+  FALSE_POSITIVE
+  RESOLVED
+}
+
+input PaginationInput {
+  page: Int = 1
+  limit: Int = 20
+  sortBy: String
+  sortOrder: SortOrder = DESC
+}
+
+input DateRangeInput {
+  start: DateTime!
+  end: DateTime!
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}

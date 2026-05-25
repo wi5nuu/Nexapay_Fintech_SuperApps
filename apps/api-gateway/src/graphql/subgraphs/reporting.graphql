@@ -1,0 +1,43 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type Query {
+  transactionVolume(
+    dateFrom: String
+    dateTo: String
+    granularity: Granularity
+  ): [VolumeDataPoint!]!
+  revenueBreakdown(
+    dateFrom: String
+    dateTo: String
+  ): [RevenueItem!]!
+  userGrowth(
+    dateFrom: String
+    dateTo: String
+    granularity: Granularity
+  ): [GrowthDataPoint!]!
+}
+
+type VolumeDataPoint {
+  date: String!
+  volume: Float!
+  count: Int!
+}
+
+type RevenueItem {
+  module: String!
+  amount: Float!
+  percentage: Float!
+}
+
+type GrowthDataPoint {
+  date: String!
+  count: Int!
+  newUsers: Int!
+}
+
+enum Granularity {
+  DAILY
+  WEEKLY
+  MONTHLY
+}

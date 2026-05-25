@@ -1,0 +1,115 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "auth-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["auth-service:4001"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "auth"
+
+  - job_name: "user-kyc-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["user-kyc-service:4002"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "user-kyc"
+
+  - job_name: "wallet-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["wallet-service:4003"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "wallet"
+
+  - job_name: "loan-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["loan-service:4004"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "loan"
+
+  - job_name: "investment-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["investment-service:4005"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "investment"
+
+  - job_name: "notification-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["notification-service:4006"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "notification"
+
+  - job_name: "reporting-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["reporting-service:4007"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "reporting"
+
+  - job_name: "fraud-detection-service"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["fraud-detection-service:4008"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "fraud-detection"
+
+  - job_name: "api-gateway"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:3000"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: "api-gateway"
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: "kafka"
+    static_configs:
+      - targets: ["kafka-exporter:9308"]
+
+  - job_name: "postgres-exporter"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  - job_name: "redis-exporter"
+    static_configs:
+      - targets: ["redis-exporter:9121"]

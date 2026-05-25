@@ -1,0 +1,178 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.5", import: ["@key", "@shareable", "@external", "@extends", "@requires"])
+
+"""
+Wallet Subgraph Schema
+Manages digital wallets, balances, transactions, transfers, and reconciliation.
+"""
+type Query {
+  """Get wallet by ID"""
+  wallet(id: ID!): Wallet!
+
+  """Get wallet for the current user"""
+  myWallet: Wallet!
+
+  """Get transaction by ID"""
+  transaction(id: ID!): Transaction!
+
+  """List transactions for a wallet"""
+  transactions(walletId: ID!, filter: TransactionFilterInput, pagination: PaginationInput): TransactionConnection!
+
+  """Get wallet balance summary"""
+  walletBalance(walletId: ID!): BalanceSummary!
+
+  """List supported currencies"""
+  supportedCurrencies: [CurrencyInfo!]!
+
+  """Get exchange rate between two currencies"""
+  exchangeRate(from: String!, to: String!): ExchangeRate!
+}
+
+type Mutation {
+  """Create a new wallet for the user"""
+  createWallet(input: CreateWalletInput!): Wallet!
+
+  """Credit funds to a wallet (internal only)"""
+  creditWallet(input: CreditDebitInput!): Transaction!
+
+  """Debit funds from a wallet (internal only)"""
+  debitWallet(input: CreditDebitInput!): Transaction!
+
+  """Transfer funds between wallets"""
+  transfer(input: TransferInput!): Transaction!
+
+  """Withdraw funds from wallet"""
+  withdraw(input: WithdrawInput!): Transaction!
+
+  """Freeze a wallet (admin only)"""
+  freezeWallet(id: ID!, reason: String!): Wallet!
+
+  """Unfreeze a wallet (admin only)"""
+  unfreezeWallet(id: ID!): Wallet!
+}
+
+type Wallet @key(fields: "id") @extends {
+  id: ID! @external
+  userId: String! @external
+
+  """Computed balance summary for the wallet"""
+  balanceSummary: BalanceSummary! @requires(fields: "balance ledgerBalance availableBalance")
+
+  """Recent transactions for this wallet"""
+  recentTransactions(limit: Int! = 10): [Transaction!]!
+}
+
+type BalanceSummary {
+  """Current balance including pending transactions"""
+  balance: Decimal!
+
+  """Balance excluding uncleared funds"""
+  ledgerBalance: Decimal!
+
+  """Balance available for withdrawal/spending"""
+  availableBalance: Decimal!
+
+  """Total amount held in pending transactions"""
+  pendingBalance: Decimal!
+
+  """Balance in default currency equivalent"""
+  equivalentInDefault: Decimal!
+}
+
+type Transaction @key(fields: "id") @extends {
+  id: ID! @external
+
+  """Human-readable transaction summary"""
+  summary: String! @requires(fields: "type amount description")
+
+  """Whether this transaction can be reversed"""
+  reversible: Boolean!
+
+  """Time elapsed since transaction creation"""
+  age: String!
+}
+
+type CurrencyInfo {
+  code: String!
+  name: String!
+  symbol: String!
+  decimals: Int!
+  isActive: Boolean!
+}
+
+type ExchangeRate {
+  from: String!
+  to: String!
+  rate: Decimal!
+  updatedAt: DateTime!
+}
+
+type TransactionConnection {
+  edges: [TransactionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type TransactionEdge {
+  node: Transaction!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input TransactionFilterInput {
+  types: [TransactionType!]
+  status: TransactionStatus
+  dateRange: DateRangeInput
+  minAmount: Decimal
+  maxAmount: Decimal
+  search: String
+  reference: String
+}
+
+input CreateWalletInput {
+  currency: String! = "USD"
+  label: String
+}
+
+input CreditDebitInput {
+  walletId: ID!
+  amount: Decimal!
+  currency: String!
+  description: String
+  reference: String!
+  idempotencyKey: String!
+  metadata: JSON
+}
+
+input TransferInput {
+  sourceWalletId: ID!
+  destinationWalletId: ID!
+  amount: Decimal!
+  currency: String!
+  description: String
+  idempotencyKey: String!
+  metadata: JSON
+}
+
+input WithdrawInput {
+  walletId: ID!
+  amount: Decimal!
+  currency: String!
+  destination: String!
+  destinationType: WithdrawalDestinationType!
+  description: String
+  idempotencyKey: String!
+}
+
+enum WithdrawalDestinationType {
+  BANK_ACCOUNT
+  MOBILE_MONEY
+  CRYPTO_WALLET
+  OTHER_WALLET
+}

@@ -1,0 +1,50 @@
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker
+docker-data/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Testing
+junit.xml
+*.lcov
+reports/
+
+# Dependencies
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*

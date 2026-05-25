@@ -1,0 +1,209 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.5", import: ["@key", "@shareable", "@external", "@extends", "@requires"])
+
+"""
+Loan Subgraph Schema
+Manages loan applications, underwriting, disbursement, repayment, and collections.
+"""
+type Query {
+  """Get a loan application by ID"""
+  loanApplication(id: ID!): LoanApplication!
+
+  """List loan applications for the current user"""
+  myLoans(status: LoanStatus, pagination: PaginationInput): LoanConnection!
+
+  """List all loan applications (admin/underwriter only)"""
+  loanApplications(filter: LoanFilterInput, pagination: PaginationInput): LoanConnection!
+
+  """Get loan product configurations"""
+  loanProducts: [LoanProduct!]!
+
+  """Calculate loan repayment schedule"""
+  calculateLoan(input: LoanCalculationInput!): LoanCalculationResult!
+
+  """Get credit score for the current user"""
+  myCreditScore: CreditScoreInfo!
+
+  """Get credit score for a user (admin only)"""
+  creditScore(userId: ID!): CreditScoreInfo!
+}
+
+type Mutation {
+  """Submit a new loan application"""
+  applyForLoan(input: LoanApplicationInput!): LoanApplication!
+
+  """Approve a loan application (underwriter only)"""
+  approveLoanApplication(id: ID!, approvedBy: String!): LoanApplication!
+
+  """Reject a loan application (underwriter only)"""
+  rejectLoanApplication(id: ID!, reason: String!, rejectedBy: String!): LoanApplication!
+
+  """Disburse approved loan funds"""
+  disburseLoan(id: ID!, disbursedBy: String!): LoanApplication!
+
+  """Make a loan repayment"""
+  repayLoan(input: LoanRepaymentInput!): LoanRepaymentResult!
+
+  """Mark loan as defaulted (collections only)"""
+  markDefault(id: ID!, reason: String!): LoanApplication!
+
+  """Write off a bad loan (admin/finance only)"""
+  writeOff(id: ID!, reason: String!): LoanApplication!
+
+  """Restructure a loan (collections only)"""
+  restructureLoan(id: ID!, input: RestructureInput!): LoanApplication!
+}
+
+type LoanApplication @key(fields: "id") @extends {
+  id: ID! @external
+  userId: String! @external
+
+  """Computed repayment status"""
+  repaymentStatus: RepaymentStatus! @requires(fields: "status repaidAmount remainingBalance")
+
+  """Days past due if applicable"""
+  daysPastDue: Int
+
+  """Loan repayment schedule"""
+  repaymentSchedule: [ScheduledPayment!]!
+
+  """Total amount paid so far"""
+  totalPaid: Decimal!
+}
+
+type ScheduledPayment {
+  installmentNumber: Int!
+  dueDate: DateTime!
+  principal: Decimal!
+  interest: Decimal!
+  totalAmount: Decimal!
+  paidAmount: Decimal!
+  status: PaymentStatus!
+  paidAt: DateTime
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  WAIVED
+}
+
+enum RepaymentStatus {
+  CURRENT
+  GRACE_PERIOD
+  PAST_DUE
+  DEFAULTED
+  PAID_OFF
+  WRITTEN_OFF
+}
+
+type LoanProduct {
+  id: ID!
+  name: String!
+  description: String
+  minAmount: Decimal!
+  maxAmount: Decimal!
+  minTermMonths: Int!
+  maxTermMonths: Int!
+  annualInterestRate: Decimal!
+  currency: String!
+  eligibilityCriteria: JSON
+  isActive: Boolean!
+}
+
+type LoanCalculationResult {
+  monthlyPayment: Decimal!
+  totalInterest: Decimal!
+  totalRepayment: Decimal!
+  annualInterestRate: Decimal!
+  schedule: [ScheduledPayment!]!
+}
+
+type LoanRepaymentResult {
+  transactionId: ID!
+  loanId: ID!
+  amount: Decimal!
+  remainingBalance: Decimal!
+  status: String!
+  paidAt: DateTime!
+}
+
+type CreditScoreInfo {
+  userId: String!
+  score: Int!
+  rating: CreditRating!
+  factors: [CreditFactor!]!
+  lastUpdated: DateTime!
+}
+
+enum CreditRating {
+  POOR
+  FAIR
+  GOOD
+  VERY_GOOD
+  EXCELLENT
+}
+
+type CreditFactor {
+  name: String!
+  impact: String!
+  description: String!
+}
+
+type LoanConnection {
+  edges: [LoanEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type LoanEdge {
+  node: LoanApplication!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input LoanFilterInput {
+  status: LoanStatus
+  minAmount: Decimal
+  maxAmount: Decimal
+  dateRange: DateRangeInput
+  userId: String
+}
+
+input LoanApplicationInput {
+  amount: Decimal!
+  currency: String!
+  purpose: String
+  termMonths: Int!
+  collateral: JSON
+  employmentDetails: JSON
+}
+
+input LoanCalculationInput {
+  amount: Decimal!
+  termMonths: Int!
+  annualInterestRate: Decimal
+}
+
+input LoanRepaymentInput {
+  loanId: ID!
+  amount: Decimal!
+  currency: String!
+  sourceWalletId: ID!
+  idempotencyKey: String!
+}
+
+input RestructureInput {
+  newTermMonths: Int!
+  newInterestRate: Decimal
+  gracePeriodMonths: Int
+  reason: String!
+}

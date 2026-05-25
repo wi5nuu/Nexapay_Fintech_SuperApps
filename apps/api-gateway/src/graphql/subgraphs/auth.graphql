@@ -1,0 +1,167 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.5", import: ["@key", "@shareable", "@external", "@extends"])
+
+"""
+Auth Subgraph Schema
+Handles user registration, authentication, session management, and role-based access control.
+"""
+type Query {
+  """Get the currently authenticated user's profile"""
+  me: User!
+
+  """Get a user by ID (admin/compliance only)"""
+  user(id: ID!): User
+
+  """List users with optional filters (admin/compliance only)"""
+  users(filter: UserFilterInput, pagination: PaginationInput): UserConnection!
+
+  """Verify if a token is still valid"""
+  verifyToken(token: String!): TokenVerificationResult!
+}
+
+type Mutation {
+  """Register a new user account"""
+  register(input: RegisterInput!): AuthResult!
+
+  """Authenticate with email/phone and password"""
+  login(input: LoginInput!): AuthResult!
+
+  """Refresh an expiring access token"""
+  refreshToken(refreshToken: String!): AuthResult!
+
+  """Initiate password reset flow"""
+  forgotPassword(email: String!): Boolean!
+
+  """Reset password using reset token"""
+  resetPassword(token: String!, password: String!): Boolean!
+
+  """Change current user's password"""
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+
+  """Update user profile"""
+  updateProfile(input: UpdateProfileInput!): User!
+
+  """Deactivate user account (admin only)"""
+  deactivateUser(id: ID!): Boolean!
+
+  """Activate user account (admin only)"""
+  activateUser(id: ID!): Boolean!
+
+  """Assign role to user (admin only)"""
+  assignRole(userId: ID!, role: UserRole!): User!
+}
+
+type User @key(fields: "id") @extends {
+  id: ID! @external
+
+  """Full name computed from firstName and lastName"""
+  fullName: String! @requires(fields: "firstName lastName")
+
+  """Whether the user has completed onboarding"""
+  onboardingComplete: Boolean!
+
+  """Last login timestamp"""
+  lastLoginAt: DateTime
+
+  """Active sessions count"""
+  activeSessions: Int!
+
+  """Preferred language/locale"""
+  locale: String!
+
+  """Email verification status"""
+  emailVerified: Boolean!
+
+  """Phone verification status"""
+  phoneVerified: Boolean!
+
+  """Multi-factor authentication enabled"""
+  mfaEnabled: Boolean!
+
+  """Account security level"""
+  securityLevel: SecurityLevel!
+}
+
+enum SecurityLevel {
+  STANDARD
+  ELEVATED
+  HIGH
+  MAXIMUM
+}
+
+"""Result of an authentication operation"""
+type AuthResult {
+  """JWT access token"""
+  accessToken: String!
+
+  """JWT refresh token"""
+  refreshToken: String!
+
+  """Token expiration timestamp"""
+  expiresAt: DateTime!
+
+  """Authenticated user"""
+  user: User!
+}
+
+type TokenVerificationResult {
+  """Whether the token is valid"""
+  valid: Boolean!
+
+  """Decoded token payload if valid"""
+  payload: JSON
+
+  """Error message if invalid"""
+  error: String
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input UserFilterInput {
+  role: UserRole
+  kycStatus: KycStatus
+  isActive: Boolean
+  search: String
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+input RegisterInput {
+  email: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  phone: String
+  locale: String
+}
+
+input LoginInput {
+  email: String
+  phone: String
+  password: String!
+  mfaCode: String
+  deviceFingerprint: String
+}
+
+input UpdateProfileInput {
+  firstName: String
+  lastName: String
+  phone: String
+  locale: String
+}

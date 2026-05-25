@@ -1,0 +1,374 @@
+syntax = "proto3";
+
+package nexapay.events;
+
+option go_package = "github.com/nexapay/proto/events";
+option java_package = "com.nexapay.events";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+/*
+ * NexaPay Event Schemas
+ * All events published to Kafka follow these protobuf schemas.
+ * Events are organized by domain: Wallet, Transfer, Loan, KYC, Fraud, Investment.
+ */
+
+// ──────────────────────────────────────────────
+// Common Enums
+// ──────────────────────────────────────────────
+
+enum EventSource {
+  EVENT_SOURCE_UNSPECIFIED = 0;
+  EVENT_SOURCE_AUTH = 1;
+  EVENT_SOURCE_USER_KYC = 2;
+  EVENT_SOURCE_WALLET = 3;
+  EVENT_SOURCE_TRANSFER = 4;
+  EVENT_SOURCE_LOAN = 5;
+  EVENT_SOURCE_INVESTMENT = 6;
+  EVENT_SOURCE_NOTIFICATION = 7;
+  EVENT_SOURCE_REPORTING = 8;
+  EVENT_SOURCE_FRAUD = 9;
+}
+
+enum EventSeverity {
+  EVENT_SEVERITY_UNSPECIFIED = 0;
+  EVENT_SEVERITY_INFO = 1;
+  EVENT_SEVERITY_WARNING = 2;
+  EVENT_SEVERITY_ERROR = 3;
+  EVENT_SEVERITY_CRITICAL = 4;
+}
+
+// ──────────────────────────────────────────────
+// Common Envelope
+// ──────────────────────────────────────────────
+
+message EventEnvelope {
+  string event_id = 1;
+  string event_name = 2;
+  string event_version = 3;
+  EventSource source = 4;
+  EventSeverity severity = 5;
+  string correlation_id = 6;
+  string causation_id = 7;
+  string idempotency_key = 8;
+  google.protobuf.Timestamp occurred_at = 9;
+  google.protobuf.Timestamp published_at = 10;
+  map<string, string> metadata = 11;
+  string producer = 12;
+  string aggregate_id = 13;
+  string aggregate_type = 14;
+  oneof payload {
+    WalletCreditedEvent wallet_credited = 100;
+    WalletDebitedEvent wallet_debited = 101;
+    TransferFailedEvent transfer_failed = 102;
+    TransferCompletedEvent transfer_completed = 103;
+    LoanDisbursedEvent loan_disbursed = 200;
+    LoanRepaidEvent loan_repaid = 201;
+    LoanDefaultedEvent loan_defaulted = 202;
+    LoanApprovedEvent loan_approved = 203;
+    KycVerifiedEvent kyc_verified = 300;
+    KycRejectedEvent kyc_rejected = 301;
+    KycSubmittedEvent kyc_submitted = 302;
+    FraudAlertEvent fraud_alert = 400;
+    FraudResolvedEvent fraud_resolved = 401;
+    InvestmentPurchasedEvent investment_purchased = 500;
+    InvestmentWithdrawnEvent investment_withdrawn = 501;
+    InvestmentMaturedEvent investment_matured = 502;
+    UserRegisteredEvent user_registered = 600;
+    UserLoggedInEvent user_logged_in = 601;
+    NotificationSentEvent notification_sent = 700;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Wallet Events
+// ──────────────────────────────────────────────
+
+message WalletCreditedEvent {
+  string wallet_id = 1;
+  string user_id = 2;
+  string transaction_id = 3;
+  double amount = 4;
+  string currency = 5;
+  double balance_before = 6;
+  double balance_after = 7;
+  string credit_reason = 8;
+  string reference = 9;
+  string idempotency_key = 10;
+  google.protobuf.Struct metadata = 11;
+}
+
+message WalletDebitedEvent {
+  string wallet_id = 1;
+  string user_id = 2;
+  string transaction_id = 3;
+  double amount = 4;
+  string currency = 5;
+  double balance_before = 6;
+  double balance_after = 7;
+  string debit_reason = 8;
+  string reference = 9;
+  string idempotency_key = 10;
+  google.protobuf.Struct metadata = 11;
+}
+
+// ──────────────────────────────────────────────
+// Transfer Events
+// ──────────────────────────────────────────────
+
+message TransferFailedEvent {
+  string transfer_id = 1;
+  string source_wallet_id = 2;
+  string destination_wallet_id = 3;
+  string user_id = 4;
+  double amount = 5;
+  string currency = 6;
+  string failure_reason = 7;
+  string failure_code = 8;
+  string reference = 9;
+  string idempotency_key = 10;
+  int32 attempt_number = 11;
+  google.protobuf.Struct metadata = 12;
+}
+
+message TransferCompletedEvent {
+  string transfer_id = 1;
+  string source_wallet_id = 2;
+  string destination_wallet_id = 3;
+  string user_id = 4;
+  double amount = 5;
+  string currency = 6;
+  double source_balance_after = 7;
+  double dest_balance_after = 8;
+  string reference = 9;
+  string idempotency_key = 10;
+  google.protobuf.Struct metadata = 11;
+}
+
+// ──────────────────────────────────────────────
+// Loan Events
+// ──────────────────────────────────────────────
+
+message LoanDisbursedEvent {
+  string loan_id = 1;
+  string user_id = 2;
+  double amount = 3;
+  string currency = 4;
+  double interest_rate = 5;
+  int32 term_months = 6;
+  string destination_wallet_id = 7;
+  string disbursement_reference = 8;
+  google.protobuf.Timestamp disbursed_at = 9;
+  string approved_by = 10;
+  google.protobuf.Struct metadata = 11;
+}
+
+message LoanRepaidEvent {
+  string loan_id = 1;
+  string user_id = 2;
+  string transaction_id = 3;
+  double amount = 4;
+  string currency = 5;
+  double remaining_balance = 6;
+  int32 installment_number = 7;
+  double principal_portion = 8;
+  double interest_portion = 9;
+  double fee_portion = 10;
+  string source_wallet_id = 11;
+  string idempotency_key = 12;
+  google.protobuf.Timestamp repaid_at = 13;
+  bool is_early_repayment = 14;
+}
+
+message LoanDefaultedEvent {
+  string loan_id = 1;
+  string user_id = 2;
+  double outstanding_balance = 3;
+  string currency = 4;
+  int32 days_past_due = 5;
+  double accrued_interest = 6;
+  double late_fees = 7;
+  string default_reason = 8;
+  string collection_stage = 9;
+  string assigned_collector = 10;
+  google.protobuf.Timestamp defaulted_at = 11;
+  google.protobuf.Struct metadata = 12;
+}
+
+message LoanApprovedEvent {
+  string loan_id = 1;
+  string user_id = 2;
+  double approved_amount = 3;
+  string currency = 4;
+  double interest_rate = 5;
+  int32 term_months = 6;
+  string approved_by = 7;
+  google.protobuf.Timestamp approved_at = 8;
+  repeated string approval_conditions = 9;
+}
+
+// ──────────────────────────────────────────────
+// KYC Events
+// ──────────────────────────────────────────────
+
+message KycVerifiedEvent {
+  string user_id = 1;
+  string document_id = 2;
+  string document_type = 3;
+  string verified_by = 4;
+  google.protobuf.Timestamp verified_at = 5;
+  string verification_method = 6;
+  double confidence_score = 7;
+  repeated string verified_fields = 8;
+  google.protobuf.Struct metadata = 9;
+}
+
+message KycRejectedEvent {
+  string user_id = 1;
+  string document_id = 2;
+  string document_type = 3;
+  string rejected_by = 4;
+  google.protobuf.Timestamp rejected_at = 5;
+  string rejection_reason = 6;
+  string rejection_code = 7;
+  repeated string reapplication_instructions = 8;
+  bool can_reapply = 9;
+}
+
+message KycSubmittedEvent {
+  string user_id = 1;
+  string document_id = 2;
+  string document_type = 3;
+  string file_url = 4;
+  google.protobuf.Timestamp submitted_at = 5;
+  string country = 6;
+  string id_number = 7;
+}
+
+// ──────────────────────────────────────────────
+// Fraud Events
+// ──────────────────────────────────────────────
+
+message FraudAlertEvent {
+  string alert_id = 1;
+  string user_id = 2;
+  string rule_id = 3;
+  string rule_name = 4;
+  string severity = 5;
+  string description = 6;
+  string ip_address = 7;
+  string device_fingerprint = 8;
+  double risk_score = 9;
+  string transaction_id = 10;
+  string affected_entity_type = 11;
+  string affected_entity_id = 12;
+  google.protobuf.Struct details = 13;
+  google.protobuf.Timestamp detected_at = 14;
+}
+
+message FraudResolvedEvent {
+  string alert_id = 1;
+  string user_id = 2;
+  string resolved_by = 3;
+  string resolution = 4;
+  string notes = 5;
+  google.protobuf.Timestamp resolved_at = 6;
+  bool auto_resolved = 7;
+}
+
+// ──────────────────────────────────────────────
+// Investment Events
+// ──────────────────────────────────────────────
+
+message InvestmentPurchasedEvent {
+  string investment_id = 1;
+  string user_id = 2;
+  string product_name = 3;
+  string investment_type = 4;
+  double amount = 5;
+  string currency = 6;
+  double expected_return = 7;
+  string risk_level = 8;
+  google.protobuf.Timestamp maturity_date = 9;
+  string source_wallet_id = 10;
+  string reference = 11;
+  google.protobuf.Timestamp purchased_at = 12;
+}
+
+message InvestmentWithdrawnEvent {
+  string investment_id = 1;
+  string user_id = 2;
+  string product_name = 3;
+  string investment_type = 4;
+  double amount_withdrawn = 5;
+  double total_return = 6;
+  string currency = 7;
+  string destination_wallet_id = 8;
+  string withdrawal_reason = 9;
+  bool early_withdrawal = 10;
+  double penalty_fee = 11;
+  google.protobuf.Timestamp withdrawn_at = 12;
+}
+
+message InvestmentMaturedEvent {
+  string investment_id = 1;
+  string user_id = 2;
+  string product_name = 3;
+  string investment_type = 4;
+  double initial_amount = 5;
+  double total_return = 6;
+  double final_amount = 7;
+  string currency = 8;
+  string destination_wallet_id = 9;
+  google.protobuf.Timestamp maturity_date = 10;
+  bool auto_reinvest = 11;
+}
+
+// ──────────────────────────────────────────────
+// User Events
+// ──────────────────────────────────────────────
+
+message UserRegisteredEvent {
+  string user_id = 1;
+  string email = 2;
+  string phone = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string role = 6;
+  string referral_code = 7;
+  string signup_ip = 8;
+  string device_fingerprint = 9;
+  google.protobuf.Timestamp registered_at = 10;
+}
+
+message UserLoggedInEvent {
+  string user_id = 1;
+  string email = 2;
+  string ip_address = 3;
+  string device_fingerprint = 4;
+  string user_agent = 5;
+  string login_method = 6;
+  bool mfa_used = 7;
+  string session_id = 8;
+  google.protobuf.Timestamp logged_in_at = 9;
+  bool is_suspicious = 10;
+}
+
+// ──────────────────────────────────────────────
+// Notification Events
+// ──────────────────────────────────────────────
+
+message NotificationSentEvent {
+  string notification_id = 1;
+  string user_id = 2;
+  string notification_type = 3;
+  string channel = 4;
+  string title = 5;
+  string template_id = 6;
+  map<string, string> template_variables = 7;
+  string status = 8;
+  google.protobuf.Timestamp sent_at = 9;
+  string error_message = 10;
+}

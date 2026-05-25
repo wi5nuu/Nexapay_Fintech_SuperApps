@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package wallet;
+
+service WalletService {
+  rpc GetBalance (GetBalanceRequest) returns (GetBalanceResponse);
+  rpc ValidateTransfer (ValidateTransferRequest) returns (ValidateTransferResponse);
+  rpc GetTransactionHistory (GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
+}
+
+message GetBalanceRequest {
+  string userId = 1;
+  string currency = 2;
+}
+
+message GetBalanceResponse {
+  double balance = 1;
+  string currency = 2;
+  string userId = 3;
+}
+
+message ValidateTransferRequest {
+  string fromWalletId = 1;
+  double amount = 2;
+  string currency = 3;
+}
+
+message ValidateTransferResponse {
+  bool valid = 1;
+  string reason = 2;
+}
+
+message GetTransactionHistoryRequest {
+  string walletId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message TransactionMessage {
+  string id = 1;
+  string idempotencyKey = 2;
+  string fromWalletId = 3;
+  string toWalletId = 4;
+  double amount = 5;
+  string currency = 6;
+  string type = 7;
+  string status = 8;
+  string description = 9;
+  string metadata = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}
+
+message GetTransactionHistoryResponse {
+  repeated TransactionMessage transactions = 1;
+  int32 total = 2;
+}

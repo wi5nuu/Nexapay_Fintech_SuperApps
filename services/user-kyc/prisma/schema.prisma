@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum UserRole {
+  USER
+  COMPLIANCE
+  ADMIN
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  phone     String?
+  firstName String?
+  lastName  String?
+  avatarUrl String?
+  role      UserRole   @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  kyc Kyc?
+
+  @@map("users")
+}
+
+model Kyc {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  status           KycStatus @default(PENDING)
+  idDocType        String?
+  idDocRef         String?
+  idDocBackRef     String?
+  livenessVideoRef String?
+  selfieRef        String?
+  rejectionReason  String?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  submittedAt      DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("kyc_records")
+}

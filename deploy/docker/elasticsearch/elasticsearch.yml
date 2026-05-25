@@ -1,0 +1,45 @@
+cluster.name: "nexapay-elasticsearch"
+node.name: "nexapay-es-node-1"
+network.host: 0.0.0.0
+
+discovery.type: single-node
+
+bootstrap.memory_lock: true
+
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: false
+
+xpack.security.authc:
+  api_key.enabled: true
+  token.enabled: true
+
+xpack.monitoring.collection.enabled: true
+xpack.monitoring.exporters:
+  my_local:
+    type: local
+
+xpack.license.self_generated.type: basic
+
+indices.fielddata.cache.size: 20%
+indices.memory.index_buffer_size: 10%
+indices.queries.cache.size: 10%
+
+search.max_buckets: 100000
+
+thread_pool:
+  write:
+    size: 4
+    queue_size: 1000
+  search:
+    size: 8
+    queue_size: 2000
+
+reindex.remote.whitelist: "*.amazonaws.com:443"
+
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+
+logger.org.elasticsearch.discovery: DEBUG

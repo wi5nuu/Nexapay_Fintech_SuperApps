@@ -1,0 +1,73 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external"])
+
+type Query {
+  user(id: ID!): User
+  users(limit: Int, offset: Int): [User!]!
+  kycStatus(userId: ID!): KycStatus
+  pendingKycReviews(limit: Int, offset: Int): [KycSubmission!]!
+}
+
+type Mutation {
+  updateProfile(input: UpdateProfileInput!): User!
+  uploadAvatar(file: Upload!): User!
+  submitKyc(input: SubmitKycInput!): KycSubmission!
+  reviewKyc(id: ID!, input: ReviewKycInput!): KycSubmission!
+}
+
+type User @key(fields: "id") {
+  id: ID!
+  email: String! @external
+  name: String @external
+  role: String @external
+  avatarUrl: String
+  phoneNumber: String
+  isEmailVerified: Boolean!
+  isKycVerified: Boolean!
+  kycStatus: KycStatus
+  createdAt: String!
+  updatedAt: String!
+}
+
+type KycStatus {
+  status: KycState!
+  level: String!
+  submittedDocuments: [String!]!
+  submittedAt: String
+  verifiedAt: String
+  rejectionReason: String
+}
+
+enum KycState {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+type KycSubmission {
+  id: ID!
+  userId: String!
+  status: KycState!
+  documents: [String!]!
+  notes: String
+  reviewedBy: String
+  submittedAt: String!
+  reviewedAt: String
+}
+
+input UpdateProfileInput {
+  name: String
+  phoneNumber: String
+}
+
+input SubmitKycInput {
+  idDocument: String!
+  selfie: String!
+  proofOfAddress: String
+}
+
+input ReviewKycInput {
+  approved: Boolean!
+  reason: String
+}

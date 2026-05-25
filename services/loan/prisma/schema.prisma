@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  REJECTED
+  COMPLETED
+  DEFAULTED
+}
+
+enum RepaymentStatus {
+  PENDING
+  PAID
+  LATE
+  DEFAULTED
+}
+
+model Loan {
+  id             String       @id @default(uuid())
+  userId         String
+  amount         Float
+  interestRate   Float
+  termMonths     Int
+  status         LoanStatus   @default(PENDING)
+  purpose        String
+  creditScore    Int?
+  monthlyPayment Float?
+  totalPayable   Float?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  approvedAt     DateTime?
+  approvedBy     String?
+  rejectedAt     DateTime?
+  rejectedBy     String?
+  rejectedReason String?
+  disbursedAt    DateTime?
+
+  repayments Repayment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Repayment {
+  id            String          @id @default(uuid())
+  loanId        String
+  dueDate       DateTime
+  amount        Float
+  paidAmount    Float           @default(0)
+  status        RepaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  penaltyAmount Float           @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  loan Loan @relation(fields: [loanId], references: [id])
+
+  @@index([loanId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model CreditScore {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  score       Int
+  factors     Json
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}

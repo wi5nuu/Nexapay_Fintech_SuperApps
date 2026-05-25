@@ -1,0 +1,104 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type Query {
+  checkTransaction(input: CheckTransactionInput!): FraudCheckResult!
+  fraudRules: [FraudRule!]!
+  fraudFlags(status: FlagStatus): [FraudFlag!]!
+}
+
+type Mutation {
+  createFraudRule(input: CreateRuleInput!): FraudRule!
+  reviewFraudFlag(id: ID!, input: ReviewFlagInput!): FraudFlag!
+  freezeAccount(accountId: ID!): AccountStatus!
+}
+
+type FraudCheckResult {
+  isSuspicious: Boolean!
+  riskScore: Float!
+  triggeredRules: [String!]!
+  action: FraudAction
+}
+
+type FraudRule @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: RuleType!
+  config: JSON!
+  enabled: Boolean!
+  action: FraudAction!
+  priority: Int!
+  createdAt: String!
+}
+
+type FraudFlag {
+  id: ID!
+  userId: String!
+  ruleId: String!
+  transactionId: String
+  reason: String!
+  severity: FraudSeverity!
+  status: FlagStatus!
+  reviewedBy: String
+  reviewedAt: String
+  createdAt: String!
+}
+
+enum RuleType {
+  VELOCITY
+  AMOUNT
+  NEW_DEVICE
+  GEO
+  BEHAVIORAL
+}
+
+enum FraudAction {
+  FLAG
+  BLOCK
+  FREEZE
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FlagStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+}
+
+input CheckTransactionInput {
+  userId: String!
+  amount: Float!
+  currency: String!
+  ipAddress: String
+  deviceId: String
+  location: String
+  transactionType: String!
+}
+
+input CreateRuleInput {
+  name: String!
+  type: RuleType!
+  config: JSON!
+  enabled: Boolean
+  action: FraudAction!
+}
+
+input ReviewFlagInput {
+  status: FlagStatus!
+  note: String
+}
+
+type AccountStatus {
+  accountId: ID!
+  isFrozen: Boolean!
+  frozenAt: String
+  reason: String
+}
+
+scalar JSON

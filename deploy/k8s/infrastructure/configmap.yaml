@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexapay-config
+  namespace: nexapay
+  labels:
+    app: nexapay
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  TZ: "UTC"
+
+  API_GATEWAY_PORT: "3000"
+  API_GATEWAY_HOST: "0.0.0.0"
+  CORS_ORIGINS: "https://app.nexapay.com,https://admin.nexapay.com"
+
+  AUTH_SERVICE_PORT: "4001"
+  AUTH_SERVICE_GRPC_PORT: "50051"
+  AUTH_SERVICE_HOST: "auth-service.nexapay.svc.cluster.local"
+  JWT_ACCESS_EXPIRY: "15m"
+  JWT_REFRESH_EXPIRY: "7d"
+  JWT_ISSUER: "nexapay-auth"
+  TOTP_ISSUER: "NexaPay"
+
+  USER_SERVICE_PORT: "4002"
+  USER_SERVICE_HOST: "user-kyc-service.nexapay.svc.cluster.local"
+  AWS_S3_REGION: "us-east-1"
+  AWS_S3_BUCKET_KYC: "nexapay-kyc-documents"
+  AWS_S3_BUCKET_AVATAR: "nexapay-user-avatars"
+
+  WALLET_SERVICE_PORT: "4003"
+  WALLET_SERVICE_HOST: "wallet-service.nexapay.svc.cluster.local"
+  WALLET_CACHE_TTL: "300"
+
+  LOAN_SERVICE_PORT: "4004"
+  LOAN_SERVICE_HOST: "loan-service.nexapay.svc.cluster.local"
+
+  INVESTMENT_SERVICE_PORT: "4005"
+  INVESTMENT_SERVICE_HOST: "investment-service.nexapay.svc.cluster.local"
+
+  NOTIFICATION_SERVICE_PORT: "4006"
+  NOTIFICATION_SERVICE_HOST: "notification-service.nexapay.svc.cluster.local"
+  SMTP_HOST: "smtp.sendgrid.net"
+  SMTP_PORT: "587"
+  SMTP_USER: "apikey"
+  TWILIO_SMS_FROM: "+1234567890"
+
+  REPORTING_SERVICE_PORT: "4007"
+  REPORTING_SERVICE_HOST: "reporting-service.nexapay.svc.cluster.local"
+
+  FRAUD_SERVICE_PORT: "4008"
+  FRAUD_SERVICE_HOST: "fraud-detection-service.nexapay.svc.cluster.local"
+  FRAUD_RATE_LIMIT_WINDOW_MS: "60000"
+  FRAUD_RATE_LIMIT_MAX: "100"
+
+  KAFKA_BROKERS: "nexapay-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  KAFKA_CLIENT_ID: "nexapay"
+  KAFKA_CONSUMER_GROUP_PREFIX: "nexapay-"
+
+  POSTGRES_HOST: "nexapay-postgres.rds.amazonaws.com"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "nexapay"
+  POSTGRES_DB: "nexapay"
+
+  MYSQL_HOST: "nexapay-mysql.rds.amazonaws.com"
+  MYSQL_PORT: "3306"
+  MYSQL_USER: "nexapay"
+  MYSQL_DB: "nexapay_reporting"
+
+  MONGO_URI: "mongodb://nexapay-mongo.cluster.local:27017/nexapay"
+
+  REDIS_HOST: "nexapay-redis.redis.aws"
+  REDIS_PORT: "6379"
+
+  ELASTICSEARCH_NODE: "https://nexapay-es.us-east-1.es.amazonaws.com"
+  ELASTICSEARCH_URL: "https://nexapay-es.us-east-1.es.amazonaws.com"
+
+  PROMETHEUS_PUSH_GATEWAY: "http://prometheus-pushgateway.monitoring:9091"
+
+  ENCRYPTION_ALGORITHM: "aes-256-gcm"
+  IDEMPOTENCY_TTL: "86400"
+  THROTTLE_TTL: "60"
+  THROTTLE_LIMIT: "100"

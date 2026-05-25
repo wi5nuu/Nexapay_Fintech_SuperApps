@@ -1,0 +1,77 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable"])
+
+type Query {
+  products(limit: Int, offset: Int): [Product!]!
+  product(id: ID!): Product
+  portfolio(userId: ID!): [Investment!]!
+  investment(id: ID!): Investment
+  priceHistory(productId: ID!, days: Int): [PricePoint!]!
+}
+
+type Mutation {
+  buyInvestment(input: BuyInvestmentInput!): Investment!
+  withdrawInvestment(id: ID!): Investment!
+}
+
+type Product @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: InvestmentType!
+  description: String
+  minInvestment: Float!
+  maxInvestment: Float
+  expectedReturn: Float!
+  riskLevel: RiskLevel!
+  status: ProductStatus!
+  createdAt: String!
+}
+
+type Investment @key(fields: "id") {
+  id: ID!
+  userId: String!
+  productId: String!
+  product: Product
+  amount: Float!
+  units: Float!
+  status: InvestmentStatus!
+  startDate: String!
+  maturityDate: String
+  returns: Float
+  createdAt: String!
+}
+
+type PricePoint {
+  date: String!
+  price: Float!
+  volume: Int
+}
+
+enum InvestmentType {
+  MUTUAL_FUND
+  BOND
+  DEPOSIT
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  MATURED
+  WITHDRAWN
+}
+
+input BuyInvestmentInput {
+  productId: ID!
+  amount: Float!
+}

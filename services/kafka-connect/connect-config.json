@@ -1,0 +1,59 @@
+{
+  "name": "nexapay-postgres-cdc-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+    "tasks.max": "1",
+    "database.hostname": "${file:/etc/kafka-connect/db-config.properties:db.hostname}",
+    "database.port": "${file:/etc/kafka-connect/db-config.properties:db.port}",
+    "database.user": "${file:/etc/kafka-connect/db-config.properties:db.user}",
+    "database.password": "${file:/etc/kafka-connect/db-config.properties:db.password}",
+    "database.dbname": "${file:/etc/kafka-connect/db-config.properties:db.name}",
+    "topic.prefix": "nexapay.cdc.",
+    "slot.name": "nexapay_cdc_slot",
+    "publication.name": "nexapay_cdc_publication",
+    "publication.autocreate.mode": "filtered",
+    "table.include.list": "public.users,public.wallets,public.transactions,public.loan_applications,public.loan_repayments,public.kyc_documents,public.investment_products,public.investment_returns,public.notifications,public.fraud_alerts,public.audit_logs,public.idempotency_records",
+
+    "decimal.handling.mode": "double",
+    "interval.handling.mode": "string",
+    "time.precision.mode": "connect",
+
+    "tombstones.on.delete": "false",
+    "poll.interval.ms": "500",
+    "snapshot.mode": "initial",
+    "snapshot.locking.mode": "none",
+    "snapshot.select.statement.overrides": "",
+    "max.queue.size": "8192",
+    "max.batch.size": "2048",
+
+    "transforms": "unwrap,extractNew,routeByTable",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "transforms.unwrap.delete.handling.mode": "rewrite",
+
+    "transforms.extractNew.type": "org.apache.kafka.connect.transforms.ExtractField$Value",
+    "transforms.extractNew.field": "after",
+
+    "transforms.routeByTable.type": "io.debezium.transforms.ByLogicalTableRouter",
+    "transforms.routeByTable.topic.regex": "(.*)\\.(.*)\\.(.*)",
+    "transforms.routeByTable.topic.replacement": "nexapay.cdc.$3",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+
+    "heartbeat.interval.ms": "30000",
+    "heartbeat.action.query": "UPDATE public.audit_logs SET last_heartbeat = NOW() WHERE id = 'cdc_heartbeat'",
+
+    "retriable.restart.connector.wait.ms": "10000",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "nexapay.cdc.dlq",
+    "errors.deadletterqueue.topic.replication.factor": "3",
+    "errors.deadletterqueue.context.headers.enable": "true",
+
+    "provide.transaction.metadata": "true",
+    "schema.refresh.mode": "columns_diff_exclude_unchanged"
+  }
+}

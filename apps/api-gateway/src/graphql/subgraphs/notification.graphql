@@ -1,0 +1,68 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type Query {
+  notifications(userId: ID!, limit: Int, offset: Int): [Notification!]!
+  unreadCount(userId: ID!): Int!
+  notificationPreferences(userId: ID!): NotificationPreferences!
+}
+
+type Mutation {
+  markNotificationRead(id: ID!): Notification!
+  markAllNotificationsRead(userId: ID!): Boolean!
+  updateNotificationPreferences(input: PreferenceInput!): NotificationPreferences!
+}
+
+type Notification @key(fields: "id") {
+  id: ID!
+  userId: String!
+  title: String!
+  body: String!
+  channels: [NotificationChannel!]!
+  status: NotificationStatus!
+  priority: NotificationPriority!
+  topic: String!
+  metadata: JSON
+  readAt: String
+  sentAt: String
+  createdAt: String!
+}
+
+type NotificationPreferences @key(fields: "userId") {
+  userId: ID!
+  preferences: JSON!
+  doNotDisturb: Boolean!
+  quietHoursStart: String
+  quietHoursEnd: String
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+input PreferenceInput {
+  preferences: JSON
+  doNotDisturb: Boolean
+  quietHoursStart: String
+  quietHoursEnd: String
+}
+
+scalar JSON

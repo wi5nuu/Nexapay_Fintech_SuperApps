@@ -1,0 +1,350 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: auth-service
+    url: http://auth:3001
+    routes:
+      - name: auth-routes
+        paths:
+          - /api/v1/auth
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              hour: 1000
+              policy: local
+
+  - name: user-kyc-service
+    url: http://user-kyc:3002
+    routes:
+      - name: user-kyc-routes
+        paths:
+          - /api/v1/users
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 30
+              hour: 500
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Idempotency-Key
+              exposed_headers:
+                - X-Request-Id
+
+  - name: wallet-service
+    url: http://wallet:3003
+    routes:
+      - name: wallet-routes
+        paths:
+          - /api/v1/wallets
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              hour: 2000
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Idempotency-Key
+              exposed_headers:
+                - X-Request-Id
+                - X-Balance
+
+  - name: loan-service
+    url: http://loan:3004
+    routes:
+      - name: loan-routes
+        paths:
+          - /api/v1/loans
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 20
+              hour: 300
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Idempotency-Key
+              exposed_headers:
+                - X-Request-Id
+
+  - name: investment-service
+    url: http://investment:3005
+    routes:
+      - name: investment-routes
+        paths:
+          - /api/v1/investments
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 30
+              hour: 500
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Idempotency-Key
+              exposed_headers:
+                - X-Request-Id
+
+  - name: notification-service
+    url: http://notification:3006
+    routes:
+      - name: notification-routes
+        paths:
+          - /api/v1/notifications
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 120
+              hour: 3000
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+              exposed_headers:
+                - X-Request-Id
+
+  - name: reporting-service
+    url: http://reporting:3007
+    routes:
+      - name: reporting-routes
+        paths:
+          - /api/v1/reports
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 10
+              hour: 100
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+              headers:
+                - Authorization
+                - Content-Type
+              exposed_headers:
+                - X-Request-Id
+
+  - name: fraud-service
+    url: http://fraud-detection:3008
+    routes:
+      - name: fraud-routes
+        paths:
+          - /api/v1/fraud
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              hour: 1000
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+              exposed_headers:
+                - X-Request-Id
+
+  - name: graphql-service
+    url: http://api-gateway:4000/graphql
+    routes:
+      - name: graphql-routes
+        paths:
+          - /graphql
+        strip_path: false
+        methods:
+          - GET
+          - POST
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              hour: 1000
+              policy: local
+          - name: cors
+            config:
+              origins:
+                - "*"
+              methods:
+                - GET
+                - POST
+              headers:
+                - Authorization
+                - Content-Type
+              exposed_headers:
+                - X-Request-Id
+
+consumers:
+  - username: internal-service
+    custom_id: internal-svc
+    keyauth_credentials:
+      - key: nexapay-internal-key
+
+  - username: anonymous
+    custom_id: anonymous
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - Idempotency-Key
+        - X-Request-Id
+      exposed_headers:
+        - X-Request-Id
+        - X-Balance
+        - X-RateLimit-Remaining
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 60
+      hour: 2000
+      policy: local
+
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Gateway-Proxy:kong
+
+  - name: correlation-id
+    config:
+      header_name: X-Request-Id
+      generator: uuid#counter
+      echo_downstream: true

@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  MATURED
+  WITHDRAWN
+}
+
+model Investment {
+  id              String           @id @default(uuid())
+  userId          String           @map("user_id")
+  productId       String           @map("product_id")
+  amount          Decimal
+  units           Decimal
+  status          InvestmentStatus @default(ACTIVE)
+  startDate       DateTime         @map("start_date")
+  maturityDate    DateTime         @map("maturity_date")
+  returns         Decimal          @default(0)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@map("investments")
+}
+
+enum ProductType {
+  MUTUAL_FUND
+  BOND
+  DEPOSIT
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+}
+
+model Product {
+  id              String        @id @default(autoincrement()) @map("id")
+  name            String
+  type            ProductType
+  description     String
+  minInvestment   Decimal       @map("min_investment")
+  maxInvestment   Decimal       @map("max_investment")
+  expectedReturn  Decimal       @map("expected_return")
+  riskLevel       RiskLevel     @map("risk_level")
+  status          ProductStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("products")
+}

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package nexapay.userkyc;
+
+service UserKycService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+  rpc GetKycStatus (GetKycStatusRequest) returns (GetKycStatusResponse);
+  rpc VerifyKyc (VerifyKycRequest) returns (VerifyKycResponse);
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string role = 4;
+  string kyc_status = 5;
+  bool is_active = 6;
+  int64 created_at = 7;
+}
+
+message GetKycStatusRequest {
+  string user_id = 1;
+}
+
+message GetKycStatusResponse {
+  string user_id = 1;
+  string status = 2;
+  string level = 3;
+  repeated string submitted_documents = 4;
+  int64 submitted_at = 5;
+  int64 verified_at = 6;
+  string rejection_reason = 7;
+}
+
+message VerifyKycRequest {
+  string kyc_id = 1;
+  string reviewer_id = 2;
+  bool approved = 3;
+  string reason = 4;
+}
+
+message VerifyKycResponse {
+  bool success = 1;
+  string new_status = 2;
+  string message = 3;
+}

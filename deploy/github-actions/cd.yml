@@ -1,0 +1,150 @@
+name: NexaPay CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["NexaPay CI Pipeline"]
+    branches: [main]
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: nexapay-production-cluster
+
+jobs:
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download updated manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: k8s-manifests
+          path: deploy/k8s/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.29.0"
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Apply infrastructure manifests
+        run: |
+          kubectl apply -f deploy/k8s/infrastructure/namespace.yaml
+          kubectl apply -f deploy/k8s/infrastructure/configmap.yaml
+          kubectl apply -f deploy/k8s/infrastructure/sealed-secret.yaml
+          kubectl apply -f deploy/k8s/infrastructure/network-policy.yaml
+          kubectl apply -f deploy/k8s/infrastructure/pod-disruption-budget.yaml
+          kubectl apply -f deploy/k8s/infrastructure/ingress.yaml
+
+      - name: Deploy all services
+        id: deploy
+        run: |
+          services=("auth" "user-kyc" "wallet" "loan" "investment" "notification" "reporting" "fraud-detection" "api-gateway")
+
+          for service in "${services[@]}"; do
+            echo "Deploying $service..."
+
+            kubectl apply -f deploy/k8s/$service/service.yaml
+            kubectl apply -f deploy/k8s/$service/deployment.yaml
+            kubectl apply -f deploy/k8s/$service/hpa.yaml
+
+            echo "Waiting for $service rollout..."
+            kubectl rollout status deployment/$service \
+              -n nexapay \
+              --timeout=300s
+
+            if [ $? -ne 0 ]; then
+              echo "Rollback triggered for $service"
+              kubectl rollout undo deployment/$service -n nexapay
+              exit 1
+            fi
+
+            echo "✓ $service deployed successfully"
+          done
+
+      - name: Health check all services
+        if: steps.deploy.outcome == 'success'
+        run: |
+          endpoints=(
+            "auth-service:4001"
+            "user-kyc-service:4002"
+            "wallet-service:4003"
+            "loan-service:4004"
+            "investment-service:4005"
+            "notification-service:4006"
+            "reporting-service:4007"
+            "fraud-detection-service:4008"
+            "api-gateway:3000"
+          )
+
+          for endpoint in "${endpoints[@]}"; do
+            service="${endpoint%%:*}"
+            port="${endpoint##*:}"
+
+            echo "Checking health of $service..."
+            kubectl run health-check-$service \
+              --image=curlimages/curl \
+              --restart=Never \
+              --namespace=nexapay \
+              --command -- /bin/sh -c \
+              "curl -sf http://$service:$port/health && echo OK || echo FAIL"
+
+            kubectl wait --for=condition=complete \
+              --timeout=30s \
+              pod/health-check-$service \
+              -n nexapay
+
+            result=$(kubectl logs health-check-$service -n nexapay)
+            kubectl delete pod health-check-$service -n nexapay
+
+            if [ "$result" != "OK" ]; then
+              echo "Health check FAILED for $service"
+              exit 1
+            fi
+            echo "✓ $service is healthy"
+          done
+
+      - name: Notify deployment success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🚀 NexaPay CD deployment successful!"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify deployment failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "💥 NexaPay CD deployment FAILED! Manual intervention required."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

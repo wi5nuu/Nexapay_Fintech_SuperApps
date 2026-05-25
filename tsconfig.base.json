@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@nexapay/shared/*": ["shared/*"],
+      "@nexapay/auth/*": ["services/auth/src/*"],
+      "@nexapay/user-kyc/*": ["services/user-kyc/src/*"],
+      "@nexapay/wallet/*": ["services/wallet/src/*"],
+      "@nexapay/loan/*": ["services/loan/src/*"],
+      "@nexapay/investment/*": ["services/investment/src/*"],
+      "@nexapay/notification/*": ["services/notification/src/*"],
+      "@nexapay/reporting/*": ["services/reporting/src/*"],
+      "@nexapay/fraud/*": ["services/fraud-detection/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

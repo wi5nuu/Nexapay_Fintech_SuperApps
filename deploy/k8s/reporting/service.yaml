@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: nexapay
+  labels:
+    app: reporting-service
+    tier: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "4007"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4007
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: reporting-service

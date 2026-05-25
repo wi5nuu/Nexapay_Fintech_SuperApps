@@ -1,0 +1,96 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexapay-ingress
+  namespace: nexapay
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:123456789012:certificate/abc-123"
+    alb.ingress.kubernetes.io/healthcheck-path: "/health"
+    alb.ingress.kubernetes.io/success-codes: "200-399"
+    alb.ingress.kubernetes.io/load-balancer-attributes: "idle_timeout.timeout_seconds=60,access_logs.s3.enabled=true,access_logs.s3.bucket=nexapay-alb-logs"
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/nexapay-waf/abc123"
+    external-dns.alpha.kubernetes.io/hostname: "api.nexapay.com"
+spec:
+  rules:
+    - host: api.nexapay.com
+      http:
+        paths:
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 4001
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: user-kyc-service
+                port:
+                  number: 4002
+          - path: /api/wallet
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-service
+                port:
+                  number: 4003
+          - path: /api/loans
+            pathType: Prefix
+            backend:
+              service:
+                name: loan-service
+                port:
+                  number: 4004
+          - path: /api/investments
+            pathType: Prefix
+            backend:
+              service:
+                name: investment-service
+                port:
+                  number: 4005
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 4006
+          - path: /api/reporting
+            pathType: Prefix
+            backend:
+              service:
+                name: reporting-service
+                port:
+                  number: 4007
+          - path: /api/fraud
+            pathType: Prefix
+            backend:
+              service:
+                name: fraud-detection-service
+                port:
+                  number: 4008
+          - path: /graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3000
+  tls:
+    - hosts:
+        - api.nexapay.com
+      secretName: nexapay-tls

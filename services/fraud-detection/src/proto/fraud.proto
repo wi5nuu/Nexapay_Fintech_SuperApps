@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package fraud;
+
+service FraudService {
+  rpc CheckTransaction (FraudCheckRequest) returns (FraudCheckResponse);
+  rpc IsAccountFrozen (FrozenRequest) returns (FrozenResponse);
+}
+
+message FraudCheckRequest {
+  string userId = 1;
+  double amount = 2;
+  string currency = 3;
+  string ipAddress = 4;
+  string deviceId = 5;
+  string location = 6;
+  string transactionType = 7;
+}
+
+message FraudCheckResponse {
+  bool allowed = 1;
+  bool hasFlags = 2;
+  repeated FraudFlag flags = 3;
+}
+
+message FraudFlag {
+  string ruleName = 1;
+  string reason = 2;
+  string severity = 3;
+}
+
+message FrozenRequest {
+  string accountId = 1;
+}
+
+message FrozenResponse {
+  bool frozen = 1;
+}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexapay
+  labels:
+    name: nexapay
+    environment: production
+    cost-center: fintech
+    managed-by: terraform
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nexapay-sa
+  namespace: nexapay
+  labels:
+    app: nexapay
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/nexapay-eks-sa-role"

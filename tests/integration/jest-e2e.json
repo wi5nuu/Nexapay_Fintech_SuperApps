@@ -1,0 +1,55 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@nexapay/shared/(.*)$": "<rootDir>/../../shared/$1",
+    "^@nexapay/auth/(.*)$": "<rootDir>/../../services/auth/src/$1",
+    "^@nexapay/user-kyc/(.*)$": "<rootDir>/../../services/user-kyc/src/$1",
+    "^@nexapay/wallet/(.*)$": "<rootDir>/../../services/wallet/src/$1",
+    "^@nexapay/loan/(.*)$": "<rootDir>/../../services/loan/src/$1",
+    "^@nexapay/investment/(.*)$": "<rootDir>/../../services/investment/src/$1",
+    "^@nexapay/notification/(.*)$": "<rootDir>/../../services/notification/src/$1",
+    "^@nexapay/reporting/(.*)$": "<rootDir>/../../services/reporting/src/$1",
+    "^@nexapay/fraud/(.*)$": "<rootDir>/../../services/fraud-detection/src/$1"
+  },
+  "setupFilesAfterSetup": ["<rootDir>/test-setup.ts"],
+  "globalSetup": "<rootDir>/test-setup.ts",
+  "globalTeardown": "<rootDir>/test-setup.ts",
+  "testTimeout": 60000,
+  "bail": 1,
+  "verbose": true,
+  "collectCoverage": true,
+  "coverageDirectory": "./coverage/e2e",
+  "coverageReporters": ["text", "lcov", "clover"],
+  "coveragePathIgnorePatterns": [
+    "/node_modules/",
+    "/test/",
+    "/dist/"
+  ],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/dist/"
+  ],
+  "maxWorkers": 4,
+  "forceExit": true,
+  "detectOpenHandles": true,
+  "globals": {
+    "ts-jest": {
+      "tsconfig": "<rootDir>/../../tsconfig.base.json",
+      "diagnostics": true
+    }
+  },
+  "reporters": [
+    "default",
+    ["jest-junit", {
+      "suiteName": "NexaPay E2E Tests",
+      "outputDirectory": "./reports/e2e",
+      "outputName": "junit.xml"
+    }]
+  ]
+}
