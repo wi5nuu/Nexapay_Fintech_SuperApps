@@ -23,6 +23,12 @@ import { createPinia } from 'pinia'
 import { hydrationPlugin } from './stores/plugins/hydration'
 // ... rest of imports
 
+// Initialize Mocks
+if (process.env.NODE_ENV === 'development') {
+  const { worker } = await import('./mocks/browser')
+  await worker.start()
+}
+
 const pinia = createPinia()
 pinia.use(hydrationPlugin)
 
