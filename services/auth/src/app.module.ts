@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
 import { LoggerService } from './common/logger.service';
 
 @Module({
@@ -13,6 +14,7 @@ import { LoggerService } from './common/logger.service';
       },
     ]),
     AuthModule,
+    HealthModule,
   ],
   providers: [
     LoggerService,
