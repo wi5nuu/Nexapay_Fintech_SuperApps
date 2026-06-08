@@ -4,53 +4,47 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { LoggerService } from '../logger.service';
 
+/**
+ * Standardized HttpExceptionFilter for Auth Service.
+ * Ensures consistent JSON error responses across all API endpoints.
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new LoggerService('HttpExceptionFilter');
+  private readonly logger = new Logger('HttpExceptionFilter');
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status: number;
-    let message: string;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | object = 'Internal server error';
     let errors: string[] | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object') {
-        const resp = exceptionResponse as Record<string, unknown>;
-        message = (resp.message as string) ?? exception.message;
-        if (Array.isArray(resp.message)) {
-          errors = resp.message as string[];
-          message = 'Validation failed';
-        }
+      if (typeof exceptionResponse === 'object') {
+        const resp = exceptionResponse as any;
+        message = resp.message || resp;
+        errors = Array.isArray(resp.message) ? resp.message : undefined;
       } else {
-        message = exception.message;
+        message = exceptionResponse;
       }
-    } else {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal server error';
     }
 
-    this.logger.error(`${request.method} ${request.url} ${status} - ${message}`, {
-      statusCode: status,
-      path: request.url,
-      method: request.method,
-      ip: request.ip,
-      exception: exception instanceof Error ? exception.stack : undefined,
-    });
+    this.logger.error(
+      `${request.method} ${request.url} | Status: ${status} | Message: ${JSON.stringify(message)}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
 
     response.status(status).json({
+      success: false,
       statusCode: status,
       message,
       errors,
