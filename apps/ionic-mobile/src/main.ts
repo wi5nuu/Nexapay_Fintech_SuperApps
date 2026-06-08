@@ -19,7 +19,15 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 import '@ionic/vue/css/ionic-swiper.css'
 
-const app = createApp(App).use(IonicVue).use(createPinia()).use(router)
+import { createPinia } from 'pinia'
+import { hydrationPlugin } from './stores/plugins/hydration'
+// ... rest of imports
+
+const pinia = createPinia()
+pinia.use(hydrationPlugin)
+
+const app = createApp(App).use(IonicVue).use(pinia).use(router)
+
 
 async function initializeApp() {
   if (Capacitor.isNativePlatform()) {
