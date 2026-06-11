@@ -30,8 +30,8 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sentTransactions     Transaction @relation("SentTransactions")
-  receivedTransactions Transaction @relation("ReceivedTransactions")
+  sentTransactions     Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
 
   @@unique([userId, currency])
   @@index([userId])

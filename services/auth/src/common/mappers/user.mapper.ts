@@ -10,7 +10,7 @@ export class UserMapper {
       id: user.id,
       email: user.email,
       name: user.name,
-      roles: user.roles as string[],
+      roles: user.role as unknown as string[],
       createdAt: user.createdAt,
     };
   }

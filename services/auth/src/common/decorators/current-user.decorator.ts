@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { UserEntity } from '../../modules/auth/entities/user.entity';
 
 export const CurrentUser = createParamDecorator(
-  (data: keyof UserEntity | undefined, ctx: ExecutionContext): UserEntity | string | null => {
+  (data: keyof UserEntity | undefined, ctx: ExecutionContext): UserEntity | string | boolean | Date | null => {
     const request = ctx.switchToHttp().getRequest<Request>();
     const user = request.user as UserEntity | undefined;
 

@@ -5,5 +5,5 @@ export class RefreshDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIs...' })
   @IsString()
   @IsNotEmpty({ message: 'Refresh token is required' })
-  refreshToken: string;
+  refreshToken!: string;
 }

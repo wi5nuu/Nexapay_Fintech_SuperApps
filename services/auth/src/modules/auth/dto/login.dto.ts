@@ -4,11 +4,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class LoginDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail({}, { message: 'Invalid email address' })
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'StrongP@ss1' })
   @IsString()
-  password: string;
+  password!: string;
 
   @ApiPropertyOptional({ example: '123456' })
   @IsOptional()
